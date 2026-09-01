@@ -30,7 +30,16 @@
       position: sticky; top: 0; z-index: 30;
       border-bottom: 1px solid var(--line);
     }
-    h1 { margin: 0 0 4px; font-size: 1.15rem; }
+    .brand { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; }
+    .logo {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(160deg, #f3d48a, #c9a227);
+      color: #1a1408; font-weight: 800; font-size: .72rem;
+      display: flex; align-items: center; justify-content: center;
+      letter-spacing: .02em; flex: 0 0 auto;
+    }
+    h1 { margin: 0; font-size: 1.15rem; line-height: 1.15; }
+    .brand small { display: block; color: var(--muted); font-size: .72rem; font-weight: 500; }
     .sub { margin: 0 0 10px; color: var(--muted); font-size: .8rem; line-height: 1.35; }
     .search { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #0b1220; color: var(--text); font-size: 16px; }
     .filters { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
@@ -74,18 +83,20 @@
     }
     .btn.g { background: #34c759; color: #06210d; }
     .btn.w { background: transparent; color: var(--gold); border: 1px solid #8a6b2a; }
-    #map {
-      height: 360px;
-      width: 100%;
-      background: #1a2330;
-    }
+    #map { height: 360px; width: 100%; background: #1a2330; }
     .hint { padding: 8px 14px 20px; font-size: .75rem; color: var(--muted); }
     .leaflet-popup-content { color: #111; }
   </style>
 </head>
 <body>
   <div class="top">
-    <h1>Unidades M.UP SEDE</h1>
+    <div class="brand">
+      <div class="logo">M.UP</div>
+      <div>
+        <h1>Unidades M.UP SEDE</h1>
+        <small>uma missão acima de tudo</small>
+      </div>
+    </div>
     <p class="sub">Uma <b>unidade</b> é um pequeno grupo da igreja que se reúne toda semana na casa de um irmão ou num ponto do bairro. Cada unidade tem líder, horário e endereço. Use o botão verde <b>Mapas</b> para chegar.</p>
     <input class="search" id="q" type="search" placeholder="Buscar unidade, líder ou rua" />
     <div class="filters" id="filters">
@@ -111,7 +122,7 @@
   </div>
 
   <div id="map"></div>
-  <p class="hint">Rosa = unidade feminina. Azul = unidade masculina. Fim do Mundo e Acari são o mesmo complexo. Rua oficial = CEP dos Correios. Aproximado = rua de letra / beco sem CEP.</p>
+  <p class="hint">Rosa = unidade feminina. Azul = unidade masculina. Fim do Mundo e Acari são o mesmo complexo.</p>
 
   <script src="unidades.js"></script>
 </body>
