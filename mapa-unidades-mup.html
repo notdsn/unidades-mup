@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Mapa das Unidades — M.UP SEDE</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #121a24;
+      --card: #1e2a3a;
+      --text: #f4f1ea;
+      --muted: #b7c0cc;
+      --gold: #e8c36a;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; }
+    body { min-height: 100vh; }
+    .top {
+      padding: 14px 14px 10px;
+      background: var(--panel);
+      position: sticky; top: 0; z-index: 30;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 4px; font-size: 1.15rem; }
+    .sub { margin: 0 0 10px; color: var(--muted); font-size: .8rem; line-height: 1.35; }
+    .search { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #0b1220; color: var(--text); font-size: 16px; }
+    .filters { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
+    .chip {
+      flex: 0 0 auto; font-size: .78rem; padding: 8px 12px; border-radius: 999px;
+      background: #0b1220; border: 1px solid var(--line); color: var(--muted);
+    }
+    .chip.active { background: #3b2d12; color: var(--gold); border-color: #8a6b2a; }
+    .ios-box {
+      margin: 10px 12px 0;
+      padding: 10px 12px;
+      background: #2a2310;
+      color: var(--gold);
+      border-radius: 10px;
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+    .list { padding: 10px 12px 16px; }
+    .count { color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
+    .item {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .item.off { opacity: .55; }
+    .item h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .meta { font-size: .85rem; color: var(--muted); line-height: 1.45; }
+    .tag {
+      display: inline-block; font-size: .7rem; padding: 2px 7px; border-radius: 6px;
+      background: #0b1220; margin: 0 6px 6px 0; color: #7dd3fc;
+    }
+    .actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+      flex: 1; text-align: center; text-decoration: none; color: #0b1220;
+      background: var(--gold); font-weight: 700; font-size: .78rem;
+      padding: 12px 6px; border-radius: 9px;
+    }
+    .btn.g { background: #34c759; color: #06210d; }
+    .btn.w { background: transparent; color: var(--gold); border: 1px solid #8a6b2a; }
+    #map {
+      height: 360px;
+      width: 100%;
+      background: #1a2330;
+    }
+    .hint { padding: 8px 14px 20px; font-size: .75rem; color: var(--muted); }
+    .leaflet-popup-content { color: #111; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>Unidades M.UP SEDE</h1>
+    <p class="sub">No iPhone use o botão verde <b>Mapas</b> — abre o app nativo. Não dependa do desenho do mapa.</p>
+    <input class="search" id="q" type="search" placeholder="Buscar unidade, líder ou rua" />
+    <div class="filters" id="filters">
+      <button class="chip active" data-b="">Todos</button>
+      <button class="chip" data-b="ACARI">Acari</button>
+      <button class="chip" data-b="FIM DO MUNDO">Fim do Mundo</button>
+      <button class="chip" data-b="IRAJÁ">Irajá</button>
+      <button class="chip" data-b="PAVUNA">Pavuna</button>
+      <button class="chip" data-b="IAPC">IAPC</button>
+      <button class="chip" data-b="ITACURUÇA">Itacuruçá</button>
+    </div>
+  </div>
+
+  <div class="ios-box">
+    Se o mapa cinza não aparecer: role para baixo e toque em <b>Mapas</b> (Apple) ou <b>Google</b> no card da unidade.
+  </div>
+
+  <div class="list">
+    <p class="count" id="count"></p>
+    <div id="cards"></div>
+  </div>
+
+  <div id="map"></div>
+  <p class="hint">Rua oficial = CEP dos Correios. Aproximado = rua de letra / beco sem CEP. Fim do Mundo: Trindade = A, Sílvia dos Santos = B.</p>
+
+  <script>
+    const units = [
+      { nome: "JERUSALÉM", lider: "EDUARDO", colider: "PEDRO", horario: "19:30 / TERÇA", endereco: "Rua Canudos, 603", bairro: "IRAJÁ", cep: "21230-085", busca: "Rua Canudos, 603, Irajá, Rio de Janeiro, RJ, 21230-085", obs: "", status: "ativa", precisao: "oficial", lat: -22.82186, lng: -43.33420 },
+      { nome: "UNIDOS EM CRISTO", lider: "REINAN", colider: "VALTAIR", horario: "19:30 / TERÇA", endereco: "Rua Roberto Carlos, 4 (planilha: Praça Roberto Carlos)", bairro: "ACARI", cep: "21531-590", busca: "Rua Roberto Carlos, 4, Acari, Rio de Janeiro, RJ, 21531-590", obs: "Nos Correios a via oficial é Rua Roberto Carlos", status: "ativa", precisao: "oficial", lat: -22.82235, lng: -43.34173 },
+      { nome: "RAABE", lider: "LETÍCIA", colider: "LUCIANA", horario: "19:30 / TERÇA", endereco: "Rua Maria Oda — final da rua", bairro: "FIM DO MUNDO", cep: "21230-085", busca: "Rua J, Vila Rica de Irajá, Acari, Rio de Janeiro, RJ", obs: "Fim do Mundo: Rua Trindade = A, Sílvia dos Santos = B", status: "ativa", precisao: "aproximado", lat: -22.82497, lng: -43.33647 },
+      { nome: "CALEBE", lider: "LUCAS", colider: "—", horario: "19:30 / TERÇA", endereco: "Rua G, nº 12", bairro: "FIM DO MUNDO", cep: "21230-085", busca: "Rua G, Vila Rica de Irajá, Acari, Rio de Janeiro, RJ", obs: "Sílvia dos Santos = B; Rua G fica 5 ruas depois da Sílvia", status: "ativa", precisao: "aproximado", lat: -22.82067, lng: -43.33767 },
+      { nome: "REBECA", lider: "AUX. DÉBORA", colider: "NILDA", horario: "19:00 / TERÇA", endereco: "Travessa Leandro", bairro: "ACARI", cep: "21531-430", busca: "Travessa Leandro, Acari, Rio de Janeiro, RJ, 21531-430", obs: "", status: "ativa", precisao: "oficial", lat: -22.82540, lng: -43.34380 },
+      { nome: "ESTÁ CONSUMADO", lider: "AUX. IDAIANE", colider: "AUX. ALINE", horario: "19:30 / TERÇA", endereco: "Rua Geraldo, 31", bairro: "ACARI", cep: "21531-370", busca: "Rua Geraldo, 31, Acari, Rio de Janeiro, RJ, 21531-370", obs: "", status: "ativa", precisao: "oficial", lat: -22.82626, lng: -43.34543 },
+      { nome: "VIDA NA VIDA (Carla)", lider: "CARLA", colider: "—", horario: "20:00 / TERÇA", endereco: "Conj. Tom Jobim, Q24 B14 N3", bairro: "PAVUNA", cep: "21520-815", busca: "Rua Jaime Gomes Caldas, Conjunto Tom Jobim, Pavuna, Rio de Janeiro, RJ, 21520-815", obs: "Via oficial: Rua Jaime Gomes Caldas (Conjunto Tom Jobim)", status: "ativa", precisao: "oficial", lat: -22.81589, lng: -43.36708 },
+      { nome: "ESTER", lider: "ADELINA", colider: "GABRIELA", horario: "18:30 / TERÇA", endereco: "Rua Maria de Lurdes, S/N", bairro: "ACARI", cep: "", busca: "Rua Maria das Graças, Acari, Rio de Janeiro, RJ, 21531-470", obs: "Depois do Mercadinho J.A, 2ª rua à esquerda, portão de madeira", status: "ativa", precisao: "aproximado", lat: -22.82580, lng: -43.34420 },
+      { nome: "ANA", lider: "ELISA", colider: "ANTONIA", horario: "19:30 / TERÇA", endereco: "Travessa Severino, 16", bairro: "ACARI", cep: "21531-650", busca: "Travessa Severino, 16, Acari, Rio de Janeiro, RJ, 21531-650", obs: "", status: "ativa", precisao: "oficial", lat: -22.82490, lng: -43.33910 },
+      { nome: "NABOTE", lider: "DOUGLAS", colider: "AUX. ARILDO", horario: "19:30 / TERÇA", endereco: "Travessa Severino, 16", bairro: "ACARI", cep: "21531-650", busca: "Travessa Severino, 16, Acari, Rio de Janeiro, RJ, 21531-650", obs: "Mesmo endereço da unidade ANA", status: "ativa", precisao: "oficial", lat: -22.82500, lng: -43.33895 },
+      { nome: "RUTH", lider: "DANIELE", colider: "—", horario: "19:30 / TERÇA", endereco: "Travessa Agnaldo, 9", bairro: "ACARI", cep: "21531-180", busca: "Travessa Agnaldo, 9, Acari, Rio de Janeiro, RJ, 21531-180", obs: "DESATIVADO", status: "desativada", precisao: "oficial", lat: -22.82460, lng: -43.34320 },
+      { nome: "EKBALLO", lider: "ANDRÉIA", colider: "LAIS", horario: "19:30 / TERÇA", endereco: "Rua Guaiuba, 482 (planilha: Gualtiba)", bairro: "ACARI", cep: "21531-010", busca: "Rua Guaiuba, 482, Acari, Rio de Janeiro, RJ, 21531-010", obs: "Nome oficial: Rua Guaiuba", status: "ativa", precisao: "oficial", lat: -22.82325, lng: -43.34539 },
+      { nome: "JESUS É DEUS", lider: "OBR. HENRIQUE", colider: "MAX LEANDRO", horario: "19:00 / TERÇA", endereco: "Travessa Dona Irene, 3", bairro: "ACARI", cep: "21531-290", busca: "Travessa Dona Irene, 3, Acari, Rio de Janeiro, RJ, 21531-290", obs: "", status: "ativa", precisao: "oficial", lat: -22.82490, lng: -43.34410 },
+      { nome: "FORJADOS NA FÉ", lider: "AUX. ALEX", colider: "NATAN", horario: "20:00 / TERÇA", endereco: "Rua Geraldo, 31", bairro: "ACARI", cep: "21531-370", busca: "Rua Geraldo, 31, Acari, Rio de Janeiro, RJ, 21531-370", obs: "Mesmo endereço de ESTÁ CONSUMADO", status: "ativa", precisao: "oficial", lat: -22.82640, lng: -43.34528 },
+      { nome: "DÉBORA", lider: "MÁRCIA", colider: "—", horario: "19:30 / TERÇA", endereco: "Rua da Lama", bairro: "ACARI", cep: "", busca: "Rua da Lama, Acari, Rio de Janeiro, RJ", obs: "No murão, última casa na escada", status: "ativa", precisao: "aproximado", lat: -22.82420, lng: -43.34620 },
+      { nome: "BETEL", lider: "OBR. EDUARDO", colider: "CHARLES", horario: "19:30 / TERÇA", endereco: "Rua Maria Oda — final da rua", bairro: "FIM DO MUNDO", cep: "21230-085", busca: "Rua J, Vila Rica de Irajá, Acari, Rio de Janeiro, RJ", obs: "Mesma referência da RAABE — Sílvia dos Santos = B", status: "ativa", precisao: "aproximado", lat: -22.82480, lng: -43.33670 },
+      { nome: "IDE", lider: "CINTIA", colider: "AMANDA", horario: "19:30 / TERÇA", endereco: "Rua Joaquim Loureiro, 110, ap 103", bairro: "IAPC", cep: "21230-105", busca: "Rua Joaquim Loureiro, 110, Irajá, Rio de Janeiro, RJ, 21230-105", obs: "IAPC / Campo dos Milionários — Irajá", status: "ativa", precisao: "oficial", lat: -22.82320, lng: -43.33188 },
+      { nome: "ZOE", lider: "EMANUELE", colider: "ISABELLA", horario: "19:00 / TERÇA", endereco: "Rua H, nº 12", bairro: "FIM DO MUNDO", cep: "21230-085", busca: "Rua H, Vila Rica de Irajá, Acari, Rio de Janeiro, RJ", obs: "Sílvia dos Santos = B; Rua H fica 6 ruas depois da Sílvia", status: "ativa", precisao: "aproximado", lat: -22.82049, lng: -43.33740 },
+      { nome: "RESGATE", lider: "MARCOS", colider: "JOÃO VICTOR", horario: "19:30 / TERÇA", endereco: "Rua Ipuera, 436, ap 102", bairro: "ACARI", cep: "21530-330", busca: "Rua Ipuera, 436, Acari, Rio de Janeiro, RJ, 21530-330", obs: "", status: "ativa", precisao: "oficial", lat: -22.82275, lng: -43.34629 },
+      { nome: "GADITAS", lider: "BRUNO", colider: "RENAN", horario: "19:30 / TERÇA", endereco: "Rua Olaria, 6", bairro: "ACARI", cep: "21531-090", busca: "Rua Olaria, 6, Acari, Rio de Janeiro, RJ, 21531-090", obs: "", status: "ativa", precisao: "oficial", lat: -22.82649, lng: -43.34226 },
+      { nome: "CONECTADOS", lider: "JANDERSON", colider: "—", horario: "20:00 / TERÇA", endereco: "Beco Damião, 11", bairro: "ACARI", cep: "21531-611", busca: "Beco Damião, 11, Acari, Rio de Janeiro, RJ, 21531-611", obs: "", status: "ativa", precisao: "oficial", lat: -22.82440, lng: -43.33940 },
+      { nome: "VIDA NA VIDA (Terra)", lider: "TERRA", colider: "—", horario: "20:00 / TERÇA", endereco: "Conj. Tom Jobim, Q24 B14 N3", bairro: "PAVUNA", cep: "21520-815", busca: "Rua Jaime Gomes Caldas, Conjunto Tom Jobim, Pavuna, Rio de Janeiro, RJ, 21520-815", obs: "Mesmo conjunto da outra Vida na Vida", status: "ativa", precisao: "oficial", lat: -22.81600, lng: -43.36690 },
+      { nome: "NOEMI", lider: "GLEICE", colider: "—", horario: "20:00 / SEXTA", endereco: "Alameda do Sol Nascente, 75, bl 03 apt 201", bairro: "ITACURUÇA", cep: "23870-000", busca: "Alameda do Sol Nascente, 75, Itacuruçá, Mangaratiba, RJ, 23870-000", obs: "Cond. Brisa do Mar — 3º distrito de Itacuruçá, Mangaratiba", status: "ativa", precisao: "oficial", lat: -22.92780, lng: -43.90830 },
+      { nome: "JOSUÉ", lider: "EDSON", colider: "—", horario: "19:30 / TERÇA", endereco: "Rua Nova, 14", bairro: "ACARI", cep: "21531-710", busca: "Rua Wilson, Acari, Rio de Janeiro, RJ, 21531-710", obs: "Rua Nova é nome local; referência: Rua Wilson / Padaria da Rua Nova", status: "ativa", precisao: "aproximado", lat: -22.82290, lng: -43.34380 }
+    ];
+
+    function gmaps(u) {
+      return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(u.busca);
+    }
+    function amaps(u) {
+      return "https://maps.apple.com/?q=" + encodeURIComponent(u.busca) + "&ll=" + u.lat + "," + u.lng;
+    }
+    function waze(u) {
+      return "https://waze.com/ul?ll=" + u.lat + "," + u.lng + "&navigate=yes";
+    }
+
+    let bairro = "";
+    function match(u) {
+      const q = (document.getElementById("q").value || "").toLowerCase().trim();
+      if (bairro && u.bairro !== bairro) return false;
+      if (!q) return true;
+      return [u.nome, u.lider, u.colider, u.endereco, u.bairro, u.obs].join(" ").toLowerCase().includes(q);
+    }
+
+    function renderCards() {
+      const shown = units.filter(match);
+      document.getElementById("count").textContent = shown.length + " unidade(s)";
+      document.getElementById("cards").innerHTML = shown.map((u) => `
+        <article class="item ${u.status === "desativada" ? "off" : ""}">
+          <h3>${u.nome}</h3>
+          <span class="tag">${u.bairro}</span>
+          <span class="tag">${u.precisao === "oficial" ? "rua oficial" : "aproximado"}</span>
+          <div class="meta">
+            ${u.horario}<br>
+            ${u.endereco}${u.cep ? " · CEP " + u.cep : ""}<br>
+            Líder: ${u.lider}${u.colider !== "—" ? " · Co-líder: " + u.colider : ""}
+            ${u.obs ? "<br>Obs: " + u.obs : ""}
+          </div>
+          <div class="actions">
+            <a class="btn g" href="${amaps(u)}">Mapas</a>
+            <a class="btn" href="${gmaps(u)}">Google</a>
+            <a class="btn w" href="${waze(u)}">Waze</a>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    document.getElementById("q").addEventListener("input", renderCards);
+    document.getElementById("filters").addEventListener("click", function (e) {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      document.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
+      chip.classList.add("active");
+      bairro = chip.getAttribute("data-b");
+      renderCards();
+    });
+    renderCards();
+
+    function startMap() {
+      if (typeof L === "undefined") return;
+      var map = L.map("map", { tap: true }).setView([-22.8235, -43.3405], 15);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+      units.forEach(function (u) {
+        if (u.bairro === "ITACURUÇA") return;
+        L.circleMarker([u.lat, u.lng], {
+          radius: 9,
+          color: "#fff",
+          weight: 2,
+          fillColor: u.bairro === "FIM DO MUNDO" ? "#fb7185" : "#38bdf8",
+          fillOpacity: 1
+        }).addTo(map).bindPopup("<b>" + u.nome + "</b><br>" + u.endereco + "<br><a href='" + gmaps(u) + "'>Google Maps</a>");
+      });
+      setTimeout(function () { map.invalidateSize(); }, 400);
+    }
+    if (document.readyState === "complete") startMap();
+    else window.addEventListener("load", startMap);
+  </script>
+</body>
+</html>
