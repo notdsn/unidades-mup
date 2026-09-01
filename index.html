@@ -11,8 +11,108 @@
   <title>M.UP Unidades</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #121a24;
+      --card: #1e2a3a;
+      --text: #f4f1ea;
+      --muted: #b7c0cc;
+      --gold: #e8c36a;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; }
+    body { min-height: 100vh; }
+    .top {
+      padding: 14px 14px 10px;
+      background: var(--panel);
+      position: sticky; top: 0; z-index: 30;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 4px; font-size: 1.15rem; }
+    .sub { margin: 0 0 10px; color: var(--muted); font-size: .8rem; line-height: 1.35; }
+    .search { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #0b1220; color: var(--text); font-size: 16px; }
+    .filters { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
+    .chip {
+      flex: 0 0 auto; font-size: .78rem; padding: 8px 12px; border-radius: 999px;
+      background: #0b1220; border: 1px solid var(--line); color: var(--muted);
+    }
+    .chip.active { background: #3b2d12; color: var(--gold); border-color: #8a6b2a; }
+    .ios-box {
+      margin: 10px 12px 0;
+      padding: 10px 12px;
+      background: #2a2310;
+      color: var(--gold);
+      border-radius: 10px;
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+    .list { padding: 10px 12px 16px; }
+    .count { color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
+    .item {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .item.off { opacity: .55; }
+    .item h3 { margin: 0 0 6px; font-size: 1.05rem; }
+    .meta { font-size: .85rem; color: var(--muted); line-height: 1.45; }
+    .tag {
+      display: inline-block; font-size: .7rem; padding: 2px 7px; border-radius: 6px;
+      background: #0b1220; margin: 0 6px 6px 0; color: #7dd3fc;
+    }
+    .tag.fem { color: #fb7185; }
+    .tag.masc { color: #38bdf8; }
+    .actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+      flex: 1; text-align: center; text-decoration: none; color: #0b1220;
+      background: var(--gold); font-weight: 700; font-size: .78rem;
+      padding: 12px 6px; border-radius: 9px;
+    }
+    .btn.g { background: #34c759; color: #06210d; }
+    .btn.w { background: transparent; color: var(--gold); border: 1px solid #8a6b2a; }
+    #map {
+      height: 360px;
+      width: 100%;
+      background: #1a2330;
+    }
+    .hint { padding: 8px 14px 20px; font-size: .75rem; color: var(--muted); }
+    .leaflet-popup-content { color: #111; }
+  </style>
 </head>
 <body>
-<p>carregando versao completa...</p>
+  <div class="top">
+    <h1>Unidades M.UP SEDE</h1>
+    <p class="sub">Uma <b>unidade</b> é um pequeno grupo da igreja que se reúne toda semana na casa de um irmão ou num ponto do bairro. Cada unidade tem líder, horário e endereço. Use o botão verde <b>Mapas</b> para chegar.</p>
+    <input class="search" id="q" type="search" placeholder="Buscar unidade, líder ou rua" />
+    <div class="filters" id="filters">
+      <button class="chip active" data-b="" data-s="">Todos</button>
+      <button class="chip" data-b="" data-s="F">Feminino</button>
+      <button class="chip" data-b="" data-s="M">Masculino</button>
+      <button class="chip" data-b="ACARI" data-s="">Acari</button>
+      <button class="chip" data-b="FIM DO MUNDO" data-s="">Fim do Mundo</button>
+      <button class="chip" data-b="IRAJÁ" data-s="">Irajá</button>
+      <button class="chip" data-b="PAVUNA" data-s="">Pavuna</button>
+      <button class="chip" data-b="IAPC" data-s="">IAPC</button>
+      <button class="chip" data-b="ITACURUÇA" data-s="">Itacuruçá</button>
+    </div>
+  </div>
+
+  <div class="ios-box">
+    Se o mapa cinza não aparecer: role para baixo e toque em <b>Mapas</b> (Apple) ou <b>Google</b> no card da unidade.
+  </div>
+
+  <div class="list">
+    <p class="count" id="count"></p>
+    <div id="cards"></div>
+  </div>
+
+  <div id="map"></div>
+  <p class="hint">Rosa = unidade feminina. Azul = unidade masculina. Fim do Mundo e Acari são o mesmo complexo. Rua oficial = CEP dos Correios. Aproximado = rua de letra / beco sem CEP.</p>
+
+  <script src="unidades.js"></script>
 </body>
 </html>
